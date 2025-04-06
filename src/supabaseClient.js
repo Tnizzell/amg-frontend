@@ -1,7 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://mctxddpcpxpinckqegmh.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jdHhkZHBjcHhwaW5ja3FlZ21oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM4NjQ5MzQsImV4cCI6MjA1OTQ0MDkzNH0.k4TlSS2OtA90FcYbUcKWGeJ2hvdNsBZqI_lGSdGyH0I';
-
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
+
 export default supabase;
+
+console.log("SUPABASE_URL:", process.env.REACT_APP_SUPABASE_URL);
+console.log("SUPABASE_KEY:", process.env.REACT_APP_SUPABASE_ANON_KEY);
+
