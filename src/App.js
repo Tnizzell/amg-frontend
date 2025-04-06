@@ -108,25 +108,25 @@ export default function App() {
     setAudioFile(e.target.files[0]);
   };
 
-  const handleUpload = async () => {
-    if (!audioFile) return;
+  const handleUpload = async (file) => {
+    if (!file) return;
     setLoading(true);
     setNsfwBlocked(false);
-
+  
     const formData = new FormData();
-    formData.append('file', audioFile);
-
+    formData.append('file', file);
+  
     try {
       const whisperRes = await axios.post('https://amg-backend-501i.onrender.com/transcribe', formData);
       setTranscription(whisperRes.data.text);
-
+  
       const replyRes = await axios.post('https://amg-backend-501i.onrender.com/reply', {
         prompt: whisperRes.data.text,
         premium: isPremium,
         worksafe: isWorkSafe,
         mood: mood
       });
-
+  
       if (replyRes.data.nsfw && (!isPremium || isWorkSafe)) {
         setNsfwBlocked(true);
         setGfReply(isWorkSafe
@@ -142,6 +142,7 @@ export default function App() {
       setLoading(false);
     }
   };
+  
 
   const playTTS = async (text) => {
     try {
@@ -171,7 +172,9 @@ export default function App() {
       const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
       const file = new File([audioBlob], 'voice.webm');
       setAudioFile(file);
+      await handleUpload(file);  // 👈 send directly
     };
+    
 
     mediaRecorder.start();
     setRecording(true);
@@ -264,7 +267,7 @@ export default function App() {
         />
 
         <button
-          onClick={handleUpload}
+          onClick={() => handleUpload(audioFile)}
           className="bg-pink-600 hover:bg-pink-700 px-4 py-2 rounded-xl"
           disabled={loading || !isPremium}
         >
