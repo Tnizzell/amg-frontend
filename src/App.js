@@ -65,7 +65,6 @@ export default function App() {
     }
   };
   
-
   const loadChatHistory = async (email) => {
     const { data } = await supabase
       .from('messages')
@@ -110,6 +109,7 @@ export default function App() {
 
   const handleUpload = async (file) => {
     if (!file) return;
+    console.log("handleUpload triggered. File:", file); // 👈 ADD THIS
     setLoading(true);
     setNsfwBlocked(false);
   
@@ -117,10 +117,10 @@ export default function App() {
     formData.append('file', file);
   
     try {
-      const whisperRes = await axios.post('https://amg-backend-501i.onrender.com/transcribe', formData);
+      const whisperRes = await axios.post('https://amg2-production.up.railway.app/transcribe', formData);
       setTranscription(whisperRes.data.text);
   
-      const replyRes = await axios.post('https://amg-backend-501i.onrender.com/reply', {
+      const replyRes = await axios.post('https://amg2-production.up.railway.app/reply', {
         prompt: whisperRes.data.text,
         premium: isPremium,
         worksafe: isWorkSafe,
@@ -147,7 +147,7 @@ export default function App() {
   const playTTS = async (text) => {
     try {
       const res = await axios.post(
-        'https://amg-backend-501i.onrender.com/tts',
+        'https://amg2-production.up.railway.app/tts',
         { text },
         { responseType: 'blob' }
       );
@@ -171,8 +171,11 @@ export default function App() {
     mediaRecorder.onstop = async () => {
       const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
       const file = new File([audioBlob], 'voice.webm');
+    
+      console.log("Recording stopped. File created:", file); // 👈 ADD THIS
+    
       setAudioFile(file);
-      await handleUpload(file);  // 👈 send directly
+      await handleUpload(file);
     };
     
 
@@ -184,12 +187,13 @@ export default function App() {
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
       setRecording(false);
+      console.log("Recording stopped"); // 👈 ADD THIS
     }
   };
 
   const handleSubscribe = async () => {
     try {
-      const res = await axios.post('https://amg-backend-501i.onrender.com/subscribe');
+      const res = await axios.post('https://amg2-production.up.railway.app/subscribe');
       window.location.href = res.data.url;
     } catch (err) {
       console.error('Subscribe error:', err);
