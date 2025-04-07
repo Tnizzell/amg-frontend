@@ -172,11 +172,16 @@ export default function App() {
       const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
       const file = new File([audioBlob], 'voice.webm');
     
-      console.log("Recording stopped. File created:", file); // 👈 ADD THIS
+      // LOG WHAT MATTERS
+      console.log('Blob Type:', audioBlob.type);
+      console.log('Blob Size:', audioBlob.size);
+      console.log('File Type:', file.type);
+      console.log('File Name:', file.name);
     
       setAudioFile(file);
       await handleUpload(file);
     };
+    
     
 
     mediaRecorder.start();
