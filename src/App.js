@@ -26,6 +26,8 @@ export default function App() {
   const mediaRecorderRef = useRef(null);
   const [recording, setRecording] = useState(false);
   const audioChunksRef = useRef([]);
+  const [textPrompt, setTextPrompt] = useState('');
+
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -143,6 +145,65 @@ export default function App() {
     }
   };
   
+const handleUploadFromText = async (text) => {
+  if (!text) return;
+  setLoading(true);
+  setNsfwBlocked(false);
+
+  try {
+    const replyRes = await axios.post('https://amg2-production.up.railway.app/reply', {
+      prompt: text,
+      premium: isPremium,
+      worksafe: isWorkSafe,
+      mood: mood
+    });
+
+    if (replyRes.data.nsfw && (!isPremium || isWorkSafe)) {
+      setNsfwBlocked(true);
+      setGfReply(isWorkSafe
+        ? 'Work-safe mode is ON. Content hidden 👔'
+        : 'Unlock Premium to see what she *really* wants to say... 💋');
+    } else {
+      setGfReply(replyRes.data.reply);
+      playTTS(replyRes.data.reply);
+    }
+  } catch (err) {
+    console.error('Text prompt error:', err);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleTextSubmit = async () => {
+  if (!textPrompt.trim()) return;
+
+  setLoading(true);
+  setNsfwBlocked(false);
+
+  try {
+    const replyRes = await axios.post('https://amg2-production.up.railway.app/reply', {
+      prompt: textPrompt,
+      premium: isPremium,
+      worksafe: isWorkSafe,
+      mood: mood
+    });
+
+    if (replyRes.data.nsfw && (!isPremium || isWorkSafe)) {
+      setNsfwBlocked(true);
+      setGfReply(isWorkSafe
+        ? 'Work-safe mode is ON. Content hidden 👔'
+        : 'Unlock Premium to see what she *really* wants to say... 💋');
+    } else {
+      setGfReply(replyRes.data.reply);
+      playTTS(replyRes.data.reply);
+    }
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+    setTextPrompt('');
+  }
+};
 
   const playTTS = async (text) => {
     try {
@@ -245,7 +306,23 @@ export default function App() {
       {msg.message}
     </div>
   ))}
+  
 </div>
+<input
+  type="text"
+  placeholder="Type your message..."
+  value={textPrompt}
+  onChange={(e) => setTextPrompt(e.target.value)}
+  className="w-full p-2 border rounded-md mt-4 text-black"
+/>
+
+<button
+  onClick={handleTextSubmit}
+  className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl mt-2"
+>
+  Send Text to GF
+</button>
+
 
       {isPremium && (
         <div className="bg-yellow-500 text-black font-bold text-xs px-3 py-1 rounded-full mb-2">
