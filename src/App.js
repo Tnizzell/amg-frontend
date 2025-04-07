@@ -170,7 +170,8 @@ export default function App() {
 
     mediaRecorder.onstop = async () => {
       const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-      const file = new File([audioBlob], 'voice.webm');
+      const file = new File([audioBlob], 'voice.webm', { type: 'audio/webm' });
+
     
       // LOG WHAT MATTERS
       console.log('Blob Type:', audioBlob.type);
