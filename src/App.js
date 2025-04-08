@@ -47,10 +47,15 @@ export default function App() {
   const checkPremiumStatus = async (email) => {
     const { data } = await supabase
       .from('users')
-      .select('isPremium')
+      .select('ispremium')
       .eq('email', email)
       .single();
-
+      
+      if (error) {
+        console.error('Supabase query error:', error);
+        return;
+      }
+    
     setIsPremium(!!data?.isPremium);
   };
 
