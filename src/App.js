@@ -393,43 +393,6 @@ const handleTextSubmit = async () => {
   }}>
     <h2 style={{ color: 'white' }}>Settings</h2>
     <button
-      style={{
-        padding: '10px 20px',
-        backgroundColor: 'red',
-        color: 'white',
-        border: 'none',
-        borderRadius: '8px',
-        fontSize: '1rem',
-        marginTop: '20px',
-        cursor: 'pointer'
-      }}
-      onClick={async () => {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!user) return;
-      
-        try {
-          const res = await axios.post('https://amg2-production.up.railway.app/portal', {
-            email: user.email,
-          });
-      
-          if (res.data.url) {
-            window.location.href = res.data.url;
-          } else {
-            alert('Could not load subscription portal.');
-          }
-        } catch (err) {
-          console.error('Portal error:', err);
-          alert('Something went wrong. Try again later.');
-        }
-      }}
-      
-    >
-      
-    </button>
-    Handle Cancel
-    <button
   style={{
     padding: '10px 20px',
     backgroundColor: 'red',
@@ -442,7 +405,7 @@ const handleTextSubmit = async () => {
   }}
   onClick={handleCancel}
 >
-  Cancel Subscription handle
+  Cancel Subscription
 </button>
 
   </div>
