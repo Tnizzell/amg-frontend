@@ -408,6 +408,20 @@ const handleTextSubmit = async () => {
   Cancel Subscription
 </button>
 
+<button
+      onClick={() => setShowSettings(false)}
+      style={{
+        marginTop: '15px',
+        background: 'transparent',
+        border: 'none',
+        color: 'white',
+        fontSize: '1rem',
+        textDecoration: 'underline',
+        cursor: 'pointer',
+      }}
+    >
+      Close
+    </button>
   </div>
 )}
 
