@@ -8,9 +8,11 @@ import { ThemeSupa } from '@supabase/auth-ui-shared';
 
 
 export default function App() {
+  const [userEmail, setUserEmail] = useState(null);
 
   const [chatLog, setChatLog] = useState([]);
   const chatRef = useRef(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   const [audioFile, setAudioFile] = useState(null);
   const [transcription, setTranscription] = useState('');
@@ -28,7 +30,20 @@ export default function App() {
   const audioChunksRef = useRef([]);
   const [textPrompt, setTextPrompt] = useState('');
 
-
+  useEffect(() => {
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+  
+      if (user) {
+        setUserEmail(user.email);
+      }
+    };
+  
+    getUser();
+  }, []);
+  
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -44,15 +59,19 @@ export default function App() {
     });
   }, []);
 
-  const checkPremiumStatus = async (email) => {
-    const { data } = await supabase
+  const checkPremiumStatus = async () => {
+    const user = supabase.auth.getUser(); // or however you’re tracking login
+    const { data, error } = await supabase
       .from('users')
       .select('ispremium')
-      .eq('email', email)
+      .eq('id', user.id)  // or .eq('email', user.email)
       .single();
   
-    setIsPremium(!!data?.isPremium);
+    if (data?.ispremium) {
+      setIsPremium(true); // enables mood unlock, premium model, etc
+    }
   };
+  
 
   useEffect(() => {
     if (email) {
@@ -319,6 +338,83 @@ const handleTextSubmit = async () => {
   ))}
   
 </div>
+
+{userEmail && (
+  <div style={{
+    position: 'absolute',
+    top: '10px',
+    left: '10px',
+    color: 'white',
+    fontSize: '0.9rem',
+    opacity: 0.7
+  }}>
+    {userEmail}
+  </div>
+)}
+
+<div
+  style={{
+    position: 'absolute',
+    top: '10px',
+    right: '10px',
+    cursor: 'pointer',
+    fontSize: '1.2rem',
+    color: 'white',
+  }}
+  onClick={() => setShowSettings(true)}
+>
+  ⚙️
+</div>
+{showSettings && (
+  <div style={{
+    position: 'fixed',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000
+  }}>
+    <h2 style={{ color: 'white' }}>Settings</h2>
+    <button
+      style={{
+        padding: '10px 20px',
+        backgroundColor: 'red',
+        color: 'white',
+        border: 'none',
+        borderRadius: '8px',
+        fontSize: '1rem',
+        marginTop: '20px',
+        cursor: 'pointer'
+      }}
+      onClick={async () => {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) return;
+
+        await supabase
+          .from('users')
+          .update({ ispremium: false })
+          .eq('id', user.id);
+
+        setIsPremium(false);
+        setShowSettings(false);
+        alert('Subscription canceled');
+      }}
+    >
+      Cancel Subscription
+    </button>
+    <button
+      onClick={() => setShowSettings(false)}
+      style={{ marginTop: '15px', color: 'gray', background: 'transparent', border: 'none' }}
+    >
+      Close
+    </button>
+  </div>
+)}
+
 <input
   type="text"
   placeholder="Type your message..."
