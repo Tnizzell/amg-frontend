@@ -59,26 +59,43 @@ export default function App() {
     });
   }, []);
 
-  const checkPremiumStatus = async () => {
-    const user = supabase.auth.getUser(); // or however you’re tracking login
+  const checkPremiumStatus = async (email) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+  
     const { data, error } = await supabase
       .from('users')
-      .select('ispremium')
-      .eq('id', user.id)  // or .eq('email', user.email)
+      .select('ispremium, stripe_subscription_id')
+      .eq('id', user.id)
       .single();
   
-    if (data?.ispremium) {
-      setIsPremium(true); // enables mood unlock, premium model, etc
+    if (error) {
+      console.error('Supabase fetch error:', error.message);
+      return;
     }
+  
+    // ✅ Auto-correct if they have a subscription but isPremium is false
+    if (data?.stripe_subscription_id && !data?.ispremium) {
+      await supabase
+        .from('users')
+        .update({ ispremium: true })
+        .eq('id', user.id);
+      console.log('✅ Auto-corrected ispremium to true');
+      setIsPremium(true);
+    } else {
+      setIsPremium(!!data?.ispremium);
+    }
+  
+    setUserEmail(user.email);
   };
   
-
   useEffect(() => {
     if (email) {
       localStorage.setItem('userEmail', email);
       checkPremiumStatus(email);
     }
   }, [email]);
+  
 
   const scrollToBottom = () => {
     if (chatRef.current) {
