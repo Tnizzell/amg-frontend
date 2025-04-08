@@ -296,6 +296,21 @@ const handleTextSubmit = async () => {
       console.error('Subscribe error:', err);
     }
   };
+  const handleCancel = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+  
+    try {
+      const res = await axios.post('https://amg2-production.up.railway.app/portal', {
+        email: user.email,
+      });
+      window.location.href = res.data.url;
+    } catch (err) {
+      console.error(err);
+      alert('Could not open Stripe portal');
+    }
+  };
+  
 
   const handlePremiumClick = () => {
     if (!isPremium) {
@@ -393,25 +408,43 @@ const handleTextSubmit = async () => {
           data: { user },
         } = await supabase.auth.getUser();
         if (!user) return;
-
-        await supabase
-          .from('users')
-          .update({ ispremium: false })
-          .eq('id', user.id);
-
-        setIsPremium(false);
-        setShowSettings(false);
-        alert('Subscription canceled');
+      
+        try {
+          const res = await axios.post('https://amg2-production.up.railway.app/portal', {
+            email: user.email,
+          });
+      
+          if (res.data.url) {
+            window.location.href = res.data.url;
+          } else {
+            alert('Could not load subscription portal.');
+          }
+        } catch (err) {
+          console.error('Portal error:', err);
+          alert('Something went wrong. Try again later.');
+        }
       }}
+      
     >
-      Cancel Subscription
+      
     </button>
+    Handle Cancel
     <button
-      onClick={() => setShowSettings(false)}
-      style={{ marginTop: '15px', color: 'gray', background: 'transparent', border: 'none' }}
-    >
-      Close
-    </button>
+  style={{
+    padding: '10px 20px',
+    backgroundColor: 'red',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '1rem',
+    marginTop: '20px',
+    cursor: 'pointer'
+  }}
+  onClick={handleCancel}
+>
+  Cancel Subscription handle
+</button>
+
   </div>
 )}
 
