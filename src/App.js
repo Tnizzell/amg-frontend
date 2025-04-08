@@ -50,12 +50,7 @@ export default function App() {
       .select('ispremium')
       .eq('email', email)
       .single();
-      
-      if (error) {
-        console.error('Supabase query error:', error);
-        return;
-      }
-    
+  
     setIsPremium(!!data?.isPremium);
   };
 
@@ -264,8 +259,19 @@ const handleTextSubmit = async () => {
   };
 
   const handleSubscribe = async () => {
+    const user = supabase.auth.getUser
+      ? (await supabase.auth.getUser()).data.user
+      : supabase.auth.user(); // fallback depending on SDK version
+  
+    if (!user) {
+      console.error('User not logged in');
+      return;
+    }
+  
     try {
-      const res = await axios.post('https://amg2-production.up.railway.app/subscribe');
+      const res = await axios.post('https://amg2-production.up.railway.app/subscribe', {
+        email: user.email,
+      });
       window.location.href = res.data.url;
     } catch (err) {
       console.error('Subscribe error:', err);
