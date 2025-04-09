@@ -33,7 +33,7 @@ export default function App() {
   const [recording, setRecording] = useState(false);
   const audioChunksRef = useRef([]);
   const [textPrompt, setTextPrompt] = useState('');
-  
+
   useEffect(() => {
     const fetchMemory = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -433,71 +433,74 @@ const handleTextSubmit = async () => {
     zIndex: 1000
   }}>
     <h2 style={{ color: 'white' }}>Settings</h2>
+
     <button
-  style={{
-    padding: '10px 20px',
-    backgroundColor: 'red',
-    color: 'white',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '1rem',
-    marginTop: '20px',
-    cursor: 'pointer'
-  }}
-  onClick={handleCancel}
->
-  Cancel Subscription
-</button>
-<div style={{ marginTop: '30px', color: 'white', textAlign: 'center' }}>
-  <label>
-    Nickname:{" "}
-    <input
-      type="text"
-      value={nickname}
-      onChange={(e) => setNickname(e.target.value)}
-      style={{ padding: '5px', borderRadius: '5px' }}
-    />
-  </label>
-  <br />
-  <label>
-    Favorite Mood:{" "}
-    <select
-      value={favoriteMood}
-      onChange={(e) => setFavoriteMood(e.target.value)}
-      style={{ padding: '5px', borderRadius: '5px', marginTop: '10px' }}
+      style={{
+        padding: '10px 20px',
+        backgroundColor: 'red',
+        color: 'white',
+        border: 'none',
+        borderRadius: '8px',
+        fontSize: '1rem',
+        marginTop: '20px',
+        cursor: 'pointer'
+      }}
+      onClick={handleCancel}
     >
-      <option value="normal">Normal</option>
-      <option value="clingy">Clingy</option>
-      <option value="tsundere">Tsundere</option>
-      <option value="yandere">Yandere</option>
-      <option value="cute">Cute</option>
-    </select>
-  </label>
-  <br />
-  <button
-    onClick={async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
+      Cancel Subscription
+    </button>
 
-      await supabase
-        .from('users')
-        .update({ nickname, favorite_mood: favoriteMood })
-        .eq('id', user.id);
+    <h3 style={{ color: 'white', marginTop: '30px' }}>🧠 Manage Memories</h3>
+    <div style={{ marginTop: '10px', color: 'white', textAlign: 'center' }}>
+      <label>
+        Nickname:{" "}
+        <input
+          type="text"
+          value={nickname}
+          onChange={(e) => setNickname(e.target.value)}
+          style={{ padding: '5px', borderRadius: '5px' }}
+        />
+      </label>
+      <br />
+      <label>
+        Favorite Mood:{" "}
+        <select
+          value={favoriteMood}
+          onChange={(e) => setFavoriteMood(e.target.value)}
+          style={{ padding: '5px', borderRadius: '5px', marginTop: '10px' }}
+        >
+          <option value="normal">Normal</option>
+          <option value="clingy">Clingy</option>
+          <option value="tsundere">Tsundere</option>
+          <option value="yandere">Yandere</option>
+          <option value="cute">Cute</option>
+        </select>
+      </label>
+      <br />
+      <button
+        onClick={async () => {
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+          if (!user) return;
 
-      alert("Saved memory updates.");
-    }}
-    style={{ marginTop: '15px', background: 'teal', color: 'white', padding: '8px', borderRadius: '6px' }}
-  >
-    Save Memory
-  </button>
-</div>
+          await supabase
+            .from('users')
+            .update({ nickname, favorite_mood: favoriteMood })
+            .eq('id', user.id);
 
-<button
+          alert("Saved memory updates.");
+        }}
+        style={{ marginTop: '15px', background: 'teal', color: 'white', padding: '8px', borderRadius: '6px' }}
+      >
+        Save Memory
+      </button>
+    </div>
+
+    <button
       onClick={() => setShowSettings(false)}
       style={{
-        marginTop: '15px',
+        marginTop: '20px',
         background: 'transparent',
         border: 'none',
         color: 'white',
