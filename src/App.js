@@ -117,8 +117,10 @@ export default function App() {
     if (email) {
       localStorage.setItem('userEmail', email);
       checkPremiumStatus(email);
+      loadChatHistory(); // ✅ Pull chat history
     }
   }, [email]);
+  
   
 
   const scrollToBottom = () => {
@@ -127,17 +129,37 @@ export default function App() {
     }
   };
   
-  const loadChatHistory = async (email) => {
-    const { data } = await supabase
+  const loadChatHistory = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+  
+    const { data, error } = await supabase
       .from('messages')
-      .select('*')
-      .eq('user_email', email)
+      .select('message, reply, created_at')
+      .eq('email', user.email)
       .order('created_at', { ascending: true });
-    if (data) {
-      setChatLog(data);
-      setTimeout(scrollToBottom, 100); // 👈 smooth scroll after loading
+  
+    if (error) {
+      console.error('Failed to load chat history:', error.message);
+      return;
     }
+  
+    const formattedChat = data.flatMap(entry => ([
+      { role: 'user', message: entry.message },
+      { role: 'gf', message: entry.reply }
+    ]));
+  
+    setChatLog(formattedChat);
+  
+    setTimeout(() => {
+      chatRef.current?.scrollTo({
+        top: chatRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }, 100);
   };
+  
+  
   
   const logout = async () => {
     await supabase.auth.signOut();
@@ -147,7 +169,7 @@ export default function App() {
     setSession(null);
   };
 
-  const userAvatar = session?.user?.user_metadata?.avatar_url;
+const userAvatar = session?.user?.user_metadata?.avatar_url;
 
 <div className="flex flex-col items-center sm:items-stretch">
 
@@ -234,7 +256,7 @@ const handleUploadFromText = async (text) => {
   }
 };
 
-const handleTextSubmit = async () => {
+const handleTextSubmit = async () => { 
   if (!textPrompt.trim()) return;
 
   setLoading(true);
@@ -254,8 +276,21 @@ const handleTextSubmit = async () => {
         ? 'Work-safe mode is ON. Content hidden 👔'
         : 'Unlock Premium to see what she *really* wants to say... 💋');
     } else {
-      setGfReply(replyRes.data.reply);
-      playTTS(replyRes.data.reply);
+      const aiReply = replyRes.data.reply;
+      setGfReply(aiReply);
+      playTTS(aiReply);
+
+      // ✅ Save chat to Supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('messages').insert([
+          {
+            email: user.email,
+            message: textPrompt,
+            reply: aiReply,
+          },
+        ]);
+      }
     }
   } catch (err) {
     console.error(err);
@@ -264,6 +299,7 @@ const handleTextSubmit = async () => {
     setTextPrompt('');
   }
 };
+
 
   const playTTS = async (text) => {
     try {
@@ -362,17 +398,28 @@ const handleTextSubmit = async () => {
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4">
-        <h1 className="text-xl mb-4">Login to AMG</h1>
-        <Auth
-          supabaseClient={supabase}
-          appearance={{ theme: ThemeSupa }}
-          theme="dark"
-          providers={['google']}
-        />
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4 relative overflow-hidden">
+  
+        {/* 🔵 Left Banner */}
+        <div className="absolute left-0 top-0 bottom-0 w-1/4 bg-gradient-to-b from-purple-900 via-black to-purple-900 opacity-40 z-0" />
+  
+        {/* 🔴 Right Banner */}
+        <div className="absolute right-0 top-0 bottom-0 w-1/4 bg-gradient-to-b from-pink-800 via-black to-pink-800 opacity-40 z-0" />
+  
+        {/* Center Login Content */}
+        <div className="relative z-10 text-center">
+          <h1 className="text-2xl font-bold mb-4">Login to AMG</h1>
+          <Auth
+            supabaseClient={supabase}
+            appearance={{ theme: ThemeSupa }}
+            theme="dark"
+            providers={['google']}
+          />
+        </div>
       </div>
     );
   }
+  
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4">
