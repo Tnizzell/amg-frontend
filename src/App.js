@@ -14,6 +14,10 @@ export default function App() {
   const chatRef = useRef(null);
   const [showSettings, setShowSettings] = useState(false);
 
+  const [nickname, setNickname] = useState('');
+  const [favoriteMood, setFavoriteMood] = useState('');
+
+
   const [audioFile, setAudioFile] = useState(null);
   const [transcription, setTranscription] = useState('');
   const [gfReply, setGfReply] = useState('');
@@ -29,6 +33,26 @@ export default function App() {
   const [recording, setRecording] = useState(false);
   const audioChunksRef = useRef([]);
   const [textPrompt, setTextPrompt] = useState('');
+  
+  useEffect(() => {
+    const fetchMemory = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+  
+      const { data, error } = await supabase
+        .from('users')
+        .select('nickname, favorite_mood')
+        .eq('id', user.id)
+        .single();
+  
+      if (data) {
+        setNickname(data.nickname || '');
+        setFavoriteMood(data.favorite_mood || '');
+      }
+    };
+  
+    fetchMemory();
+  }, []);
 
   useEffect(() => {
     const getUser = async () => {
@@ -424,6 +448,51 @@ const handleTextSubmit = async () => {
 >
   Cancel Subscription
 </button>
+<div style={{ marginTop: '30px', color: 'white', textAlign: 'center' }}>
+  <label>
+    Nickname:{" "}
+    <input
+      type="text"
+      value={nickname}
+      onChange={(e) => setNickname(e.target.value)}
+      style={{ padding: '5px', borderRadius: '5px' }}
+    />
+  </label>
+  <br />
+  <label>
+    Favorite Mood:{" "}
+    <select
+      value={favoriteMood}
+      onChange={(e) => setFavoriteMood(e.target.value)}
+      style={{ padding: '5px', borderRadius: '5px', marginTop: '10px' }}
+    >
+      <option value="normal">Normal</option>
+      <option value="clingy">Clingy</option>
+      <option value="tsundere">Tsundere</option>
+      <option value="yandere">Yandere</option>
+      <option value="cute">Cute</option>
+    </select>
+  </label>
+  <br />
+  <button
+    onClick={async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      await supabase
+        .from('users')
+        .update({ nickname, favorite_mood: favoriteMood })
+        .eq('id', user.id);
+
+      alert("Saved memory updates.");
+    }}
+    style={{ marginTop: '15px', background: 'teal', color: 'white', padding: '8px', borderRadius: '6px' }}
+  >
+    Save Memory
+  </button>
+</div>
 
 <button
       onClick={() => setShowSettings(false)}
