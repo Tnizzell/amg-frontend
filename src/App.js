@@ -458,7 +458,13 @@ const handleTextSubmit = async () => {
           type="text"
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
-          style={{ padding: '5px', borderRadius: '5px' }}
+          style={{
+            padding: '5px',
+            borderRadius: '5px',
+            color: 'white',
+            backgroundColor: '#333', // or any dark shade that fits
+            border: '1px solid white',
+          }}
         />
       </label>
       <br />
@@ -467,7 +473,14 @@ const handleTextSubmit = async () => {
         <select
           value={favoriteMood}
           onChange={(e) => setFavoriteMood(e.target.value)}
-          style={{ padding: '5px', borderRadius: '5px', marginTop: '10px' }}
+          style={{
+            padding: '5px',
+            borderRadius: '5px',
+            marginTop: '10px',
+            color: 'white',
+            backgroundColor: '#333',
+            border: '1px solid white',
+          }}
         >
           <option value="normal">Normal</option>
           <option value="clingy">Clingy</option>
