@@ -4,6 +4,7 @@ import axios from 'axios';
 import supabase from './supabaseClient';
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
+import AvatarCanvas from './components/AvatarCanvas';
 
 
 
@@ -26,6 +27,7 @@ export default function App() {
   const [isWorkSafe, setIsWorkSafe] = useState(false);
   const [nsfwBlocked, setNsfwBlocked] = useState(false);
   const [mood, setMood] = useState('normal');
+  const [userId, setUserId] = useState(null);
   const [email, setEmail] = useState(localStorage.getItem('userEmail') || '');
   const [session, setSession] = useState(null);
   const [showPremiumNotice, setShowPremiumNotice] = useState(false);
@@ -69,19 +71,26 @@ export default function App() {
   }, []);
   
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const getSessionAndWatch = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       if (session?.user?.email) {
         setEmail(session.user.email);
+        setUserId(session.user.id); // ✅ added
       }
-    });
-    supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session?.user?.email) {
-        setEmail(session.user.email);
-      }
-    });
+  
+      supabase.auth.onAuthStateChange((_event, newSession) => {
+        setSession(newSession);
+        if (newSession?.user?.email) {
+          setEmail(newSession.user.email);
+          setUserId(newSession.user.id); // ✅ added
+        }
+      });
+    };
+  
+    getSessionAndWatch();
   }, []);
+  
 
   const checkPremiumStatus = async (email) => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -120,7 +129,6 @@ export default function App() {
       loadChatHistory(); // ✅ Pull chat history
     }
   }, [email]);
-  
   
 
   const scrollToBottom = () => {
@@ -574,6 +582,14 @@ const handleTextSubmit = async () => {
   </div>
 )}
 
+<div className="w-full max-w-md mb-4 rounded-lg overflow-hidden">
+  {isPremium && userId && (
+    <div style={{ height: '300px', width: '100%', background: '#111' }}>
+      <AvatarCanvas userId={userId} mood={mood} />
+    </div>
+  )}
+</div>
+
 <input
   type="text"
   placeholder="Type your message..."
@@ -660,9 +676,9 @@ const handleTextSubmit = async () => {
             className="bg-gray-800 px-2 py-1 rounded"
           >
             <option value="normal">Normal</option>
-            <option value="yandere">Yandere 💢 🔒</option>
+            <option value="yandere">Yandere 💢 </option>
             <option value="clingy">Clingy 🥺</option>
-            <option value="tsundere">Tsundere 🙄 🔒</option>
+            <option value="tsundere">Tsundere 🙄 </option>
             <option value="cute">Cute 😘</option>
           </select>
         </label>
