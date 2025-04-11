@@ -625,11 +625,41 @@ const handleTextSubmit = async () => {
 )}
 
 <div className="w-full max-w-md mb-4 rounded-lg overflow-hidden">
-  {isPremium && userId && (
+{isPremium && userId && (
+  <>
     <div style={{ height: '300px', width: '100%', background: '#111' }}>
       <AvatarCanvas userId={userId} mood={mood} />
     </div>
-  )}
+
+    {/* 🌍 Environment Selector */}
+    <div style={{
+      position: 'absolute',
+      bottom: '80px',
+      right: '30px',
+      zIndex: 20,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px',
+    }}>
+      <label style={{ color: 'white', fontSize: '0.9rem' }}>🌐 Change Scene:</label>
+      <select
+        onChange={(e) => fetchEnvironment(userId, e.target.value)}
+        style={{
+          padding: '6px 10px',
+          background: '#222',
+          color: 'white',
+          borderRadius: '6px',
+          border: '1px solid #555',
+        }}
+      >
+        <option value="cityscape">Cityscape</option>
+        <option value="lounge">Lounge</option>
+        <option value="bedroom">Bedroom</option>
+        <option value="void">Void</option>
+      </select>
+    </div>
+  </>
+)}
 </div>
 
 <input
