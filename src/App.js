@@ -435,23 +435,6 @@ const handleTextSubmit = async () => {
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4">
       <h1 className="text-2xl font-bold mb-4">AMG AI Girlfriend</h1>
 
-      <div
-  ref={chatRef}
-  className="bg-gray-900 rounded-lg p-3 h-80 overflow-y-scroll w-full max-w-md mb-4"
->
-  {chatLog.map((msg, i) => (
-    <div
-      key={i}
-      className={`mb-2 p-2 rounded text-sm ${
-        msg.role === 'user' ? 'bg-pink-800 text-right' : 'bg-gray-700 text-left'
-      }`}
-    >
-      {msg.message}
-    </div>
-  ))}
-  
-</div>
-
 {userEmail && (
   <div style={{
     position: 'absolute',
@@ -632,7 +615,7 @@ const handleTextSubmit = async () => {
           onClick={() => setShowDrawer(true)}
           style={{
             position: 'fixed',
-            top: '20px',
+            top: '40px',
             left: '20px',
             zIndex: 30,
             padding: '12px',
