@@ -37,6 +37,10 @@ export default function App() {
   const [recording, setRecording] = useState(false);
   const audioChunksRef = useRef([]);
   const [textPrompt, setTextPrompt] = useState('');
+  const [environmentUrl, setEnvironmentUrl] = useState(null);
+  const [envPreviewOnly, setEnvPreviewOnly] = useState(false);
+
+
 
   useEffect(() => {
     const fetchMemory = async () => {
@@ -92,8 +96,32 @@ export default function App() {
   
     getSessionAndWatch();
   }, []);
-  
 
+  useEffect(() => {
+    if (userId) {
+      fetchEnvironment(userId, 'cityscape'); // or any env you want to load
+    }
+  }, [userId]);
+  
+  
+  const fetchEnvironment = async (userId, envName = 'cityscape') => {
+    try {
+      const res = await fetch('https://amg2-production.up.railway.app/environment/user-env', {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': userId,
+          'x-env-name': envName
+        }
+      });
+  
+      const data = await res.json();
+      setEnvironmentUrl(data.url);
+      setEnvPreviewOnly(data.previewOnly);
+    } catch (err) {
+      console.error('Failed to fetch environment:', err);
+    }
+  };
+  
   const checkPremiumStatus = async (email) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -434,6 +462,35 @@ const handleTextSubmit = async () => {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4">
       <h1 className="text-2xl font-bold mb-4">AMG AI Girlfriend</h1>
+      
+{envPreviewOnly && (
+  <div style={{
+    position: 'absolute',
+    bottom: '60px',
+    right: '20px',
+    background: 'rgba(0,0,0,0.7)',
+    color: '#fff',
+    padding: '12px 20px',
+    borderRadius: '8px',
+    zIndex: 30
+  }}>
+    <p>This scene is a preview.</p>
+    <button
+      onClick={() => window.location.href = 'https://buy.stripe.com/your-product-id'} // update this
+      style={{
+        marginTop: '10px',
+        background: '#ff4081',
+        border: 'none',
+        padding: '10px 16px',
+        borderRadius: '6px',
+        color: '#fff',
+        cursor: 'pointer'
+      }}
+    >
+      Purchase Scene
+    </button>
+  </div>
+)}
 
 {userEmail && (
   <div style={{
