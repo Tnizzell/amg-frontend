@@ -44,12 +44,20 @@ export default function AvatarCanvas({ userId, mood }) {
 
   useEffect(() => {
     const fetchModel = async () => {
+      console.log('📦 Fetching model for user:', userId); // ✅ Log first
+    
       const res = await fetch('https://amg2-production.up.railway.app/model/model-url', {
-        headers: { 'x-user-id': userId },
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': userId,
+        },
       });
+    
       const data = await res.json();
       setModelUrl(data.url);
     };
+    
 
     if (userId) fetchModel();
   }, [userId]);
