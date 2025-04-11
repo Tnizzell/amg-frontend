@@ -5,6 +5,7 @@ import supabase from './supabaseClient';
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import AvatarCanvas from './components/AvatarCanvas';
+import LeftDrawer from './components/LeftDrawer'; // adjust path if needed
 
 
 
@@ -18,6 +19,7 @@ export default function App() {
   const [nickname, setNickname] = useState('');
   const [favoriteMood, setFavoriteMood] = useState('');
 
+  const [showDrawer, setShowDrawer] = useState(false);
 
   const [audioFile, setAudioFile] = useState(null);
   const [transcription, setTranscription] = useState('');
@@ -619,7 +621,32 @@ const handleTextSubmit = async () => {
       )}
 
       <button onClick={logout} className="text-sm text-red-400 underline mb-4">Log out</button>
+          {/* Chat Drawer */}
+        <LeftDrawer isOpen={showDrawer} onClose={() => setShowDrawer(false)}>
+          {/* You can replace this with real history */}
+          <p>Chat history goes here...</p>
+        </LeftDrawer>
 
+        {/* Floating Toggle Button */}
+        <button
+          onClick={() => setShowDrawer(true)}
+          style={{
+            position: 'fixed',
+            top: '20px',
+            left: '20px',
+            zIndex: 30,
+            padding: '12px',
+            borderRadius: '50%',
+            backgroundColor: '#444',
+            color: '#fff',
+            border: 'none',
+            fontSize: '1.2rem',
+            cursor: 'pointer',
+          }}
+        >
+  💬
+      </button>
+      
       <div className="flex gap-4 mb-4">
         <button
           onClick={recording ? stopRecording : startRecording}
