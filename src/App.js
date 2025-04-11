@@ -476,7 +476,7 @@ const handleTextSubmit = async () => {
   }}>
     <p>This scene is a preview.</p>
     <button
-      onClick={() => window.location.href = 'https://buy.stripe.com/your-product-id'} // update this
+      onClick={() => window.location.href = 'https://buy.stripe.com/prod_S73Lp56HjjZ4kS'} // update this
       style={{
         marginTop: '10px',
         background: '#ff4081',
