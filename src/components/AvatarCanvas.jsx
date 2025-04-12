@@ -88,15 +88,36 @@ export default function AvatarCanvas({ userId, mood }) {
   
   return (
     <div style={{ width: '100%', height: '100%' }}>
-      <Canvas camera={{ position: [0, 1.5, 3] }}>
-        <ambientLight intensity={1.4} />
-        <directionalLight position={[0, 5, 5]} intensity={1.6} />
-        <pointLight position={[-10, -10, -10]} intensity={1.5} />
-        <OrbitControls enableZoom={true} />
-        <Suspense fallback={null}>
-          {modelUrl && <Avatar url={modelUrl} mood={mood} />}
-        </Suspense>
-      </Canvas>
+      <Canvas camera={{ position: [0, 1.5, 3], fov: 35 }}>
+  {/* 🌤 Ambient fill light */}
+  <ambientLight intensity={0.3} />
+
+  {/* ☀️ Key light – front/side angle */}
+  <directionalLight 
+    position={[5, 5, 5]} 
+    intensity={1} 
+    castShadow 
+    shadow-mapSize-width={1024}
+    shadow-mapSize-height={1024}
+  />
+
+  {/* 🔦 Fill light – opposite angle for depth */}
+  <pointLight position={[-5, 2, -5]} intensity={0.6} />
+
+  {/* 🔥 Rim light – silhouette pop */}
+  <spotLight 
+    position={[0, 10, 10]} 
+    angle={0.2} 
+    penumbra={1} 
+    intensity={0.5} 
+    castShadow 
+  />
+
+  {/* Your model here */}
+  <Suspense fallback={null}>
+    {modelUrl && <Avatar url={modelUrl} mood={mood} />}
+  </Suspense>
+</Canvas>
 
       {envPreviewOnly && (
   <div style={{
