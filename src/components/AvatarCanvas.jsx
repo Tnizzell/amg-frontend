@@ -89,9 +89,10 @@ export default function AvatarCanvas({ userId, mood }) {
   return (
     <div style={{ width: '100%', height: '100%' }}>
       <Canvas camera={{ position: [0, 1.5, 3] }}>
-        <ambientLight intensity={0.4} />
-        <directionalLight position={[0, 5, 5]} intensity={0.6} />
-        <OrbitControls enableZoom={false} />
+        <ambientLight intensity={1.4} />
+        <directionalLight position={[0, 5, 5]} intensity={1.6} />
+        <pointLight position={[-10, -10, -10]} intensity={1.5} />
+        <OrbitControls enableZoom={true} />
         <Suspense fallback={null}>
           {modelUrl && <Avatar url={modelUrl} mood={mood} />}
         </Suspense>
