@@ -116,23 +116,30 @@ export default function App() {
   
     // Save user's message
     await supabase.from('messages').insert({
-      user_id: userId,
       role: 'user',
       message: textPrompt
     });
   
     // Fetch last 10 messages for memory context
-    const { data: history } = await supabase
+    const { data: history, error } = await supabase
       .from('messages')
       .select('role, message')
-      .eq('user_id', userId)
       .order('inserted_at', { ascending: false })
       .limit(10);
+
   
-    const formattedHistory = history.reverse().map(m =>
-      `${m.role === 'user' ? 'You' : 'Her'}: ${m.message}`
-    ).join('\n');
-  
+      const formattedHistory = (history || []).reverse().map(m =>
+        `${m.role === 'user' ? 'You' : 'Her'}: ${m.message}`
+      ).join('\n');
+
+      const { error: insertError } = await supabase.from('messages').insert({
+        role: 'user',
+        message: textPrompt
+      });
+      
+      if (insertError) console.error('Insert failed:', insertError);
+      
+      
     // Trust score logic
     const calculateTrust = (msg, level) => {
       return level + (msg.length > 50 ? 1.25 : 0.25);
