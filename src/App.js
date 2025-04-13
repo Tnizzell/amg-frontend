@@ -87,22 +87,27 @@ export default function App() {
   };
 
   const checkPremiumStatus = async (userId) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('users')
       .select('ispremium')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
+  
+    if (error) console.error('Premium check failed:', error);
     if (data?.ispremium) setIsPremium(true);
   };
+  
 
-  const loadChatHistory = async (userId) => {
-    const { data } = await supabase
+  const loadChatHistory = async () => {
+    const { data, error } = await supabase
       .from('messages')
-      .select('role, message')
-      .order('inserted_at', { ascending: true })
-    
-    if (data) setChatLog(data);
+      .select('role,message')
+      .order('inserted_at', { ascending: true });
+  
+    if (error) console.error('Load error:', error);
+    else setChatLog(data);
   };
+  
 
   const saveMessage = async (role, message) => {
     await supabase.from('messages').insert({ user_id: userId, role, message });
@@ -116,49 +121,44 @@ export default function App() {
     setIsTyping(true);
   
     // Save user's message
-    await supabase.from('messages').insert({
+    const { error: insertError } = await supabase.from('messages').insert({
       user_id: userId,
       role: 'user',
       message: textPrompt
     });
-    
+    if (insertError) console.error('Insert failed:', insertError);
   
     // Fetch last 10 messages for memory context
     const { data: history, error } = await supabase
       .from('messages')
-      .select('role, message')
-      .order('inserted_at', { ascending: false })
+      .select('role,message')
+      .order('inserted_at', { ascending: true })
       .limit(10);
-
   
-      const formattedHistory = (history || []).reverse().map(m =>
-        `${m.role === 'user' ? 'You' : 'Her'}: ${m.message}`
-      ).join('\n');
-
-      
-      if (insertError) console.error('Insert failed:', insertError);
-      
-      
+    if (error) console.error('Load error:', error);
+  
+    const formattedHistory = (history || []).reverse().map(m =>
+      `${m.role === 'user' ? 'You' : 'Her'}: ${m.message}`
+    ).join('\n');
+  
     // Trust score logic
     const calculateTrust = (msg, level) => {
       return level + (msg.length > 50 ? 1.25 : 0.25);
     };
-  
     const trustScore = calculateTrust(textPrompt, relationshipLevel);
   
     try {
-      // Send full memory + mood info to backend
+      // Send memory + mood info to backend
       const res = await axios.post('https://amg2-production.up.railway.app/reply', {
         prompt: textPrompt,
         nickname,
-        favorite_mood,
+        favorite_mood: favoriteMood,
         relationship_level: relationshipLevel,
         trust_score: trustScore,
         memory_context: formattedHistory
       });
   
       const reply = res.data.reply;
-  
       const replyMsg = { role: 'gf', message: reply };
       setChatLog((prev) => [...prev, replyMsg]);
   
@@ -192,14 +192,23 @@ export default function App() {
     setTextPrompt('');
   };
   
-
-  const speak = (text) => {
-    const synth = window.speechSynthesis;
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = 'en-US';
-    synth.speak(utter);
+  
+  const speakWithElevenLabs = async (text) => {
+    try {
+      const response = await fetch('https://amg2-production.up.railway.app/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, voice: 'female', userId })
+      });
+      const blob = await response.blob();
+      const audio = new Audio(URL.createObjectURL(blob));
+      audio.play();
+    } catch (err) {
+      console.error('TTS failed:', err);
+    }
   };
-
+  
+  
   const handleCancel = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -504,7 +513,7 @@ export default function App() {
                 if (!user) return;
                 await supabase
                   .from('users')
-                  .update({ nickname, favorite_mood: favoriteMood })
+                  .update({ nickname, favoritemood: favoriteMood })
                   .eq('id', user.id);
                 alert('Saved memory updates.');
               }}
