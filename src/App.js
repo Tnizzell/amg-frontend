@@ -244,6 +244,11 @@ export default function App() {
   // RENDER
   return !session ? (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4">
+      <div className="bg-red-700 text-white text-sm p-3 rounded-md mb-6 shadow-md max-w-md text-center">
+        This experience is intended for adults 18 and older.  
+        By continuing, you confirm that you are of legal age.
+      </div>
+
       <h1 className="text-3xl font-bold mb-6">Login to AMG</h1>
       <Auth
         supabaseClient={supabase}
