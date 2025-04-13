@@ -30,12 +30,12 @@ export default function App() {
       if (!user) return;
       const { data } = await supabase
         .from('users')
-        .select('nickname, favorite_mood')
+        .select('nickname, favoritemood')
         .eq('id', user.id)
         .single();
       if (data) {
         setNickname(data.nickname || '');
-        setFavoriteMood(data.favorite_mood || '');
+        setFavoriteMood(data.favoritemood || '');
       }
     };
     fetchMemory();
@@ -99,7 +99,8 @@ export default function App() {
     const { data } = await supabase
       .from('messages')
       .select('role, message')
-      .eq('user_id', userId);
+      .order('inserted_at', { ascending: true })
+    
     if (data) setChatLog(data);
   };
 
@@ -116,9 +117,11 @@ export default function App() {
   
     // Save user's message
     await supabase.from('messages').insert({
+      user_id: userId,
       role: 'user',
       message: textPrompt
     });
+    
   
     // Fetch last 10 messages for memory context
     const { data: history, error } = await supabase
@@ -132,10 +135,6 @@ export default function App() {
         `${m.role === 'user' ? 'You' : 'Her'}: ${m.message}`
       ).join('\n');
 
-      const { error: insertError } = await supabase.from('messages').insert({
-        role: 'user',
-        message: textPrompt
-      });
       
       if (insertError) console.error('Insert failed:', insertError);
       
@@ -488,7 +487,7 @@ export default function App() {
             <div>
               <label className="block text-sm mb-1">Favorite Mood:</label>
               <select
-                value={favoriteMood}
+                value={favorite_Mood}
                 onChange={(e) => setFavoriteMood(e.target.value)}
                 className="px-3 py-2 bg-zinc-800 border border-white rounded-md text-white w-full"
               >
