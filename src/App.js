@@ -345,7 +345,7 @@ export default function App() {
     </div>
 
     <div className="space-y-5">
-
+      
       {/* Manage Memories */}
       <div>
         <h3 className="text-sm font-semibold text-gray-300 mb-1">🧠 Manage Memories</h3>
@@ -402,6 +402,30 @@ export default function App() {
         <p className="text-xs mt-1 text-gray-400">{relationshipLevel} / 100</p>
       </div>
 
+      <div>
+  <h3 className="text-sm font-semibold text-gray-300 mb-1">🧹 Clear Conversation</h3>
+  <button
+    onClick={async () => {
+      const confirmed = window.confirm("Are you sure you want to clear this entire conversation?");
+      if (!confirmed) return;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      await fetch('https://amg2-production.up.railway.app/reply/clear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.id })
+      });
+
+      setChatLog([]); // Clear frontend too
+    }}
+    className="bg-zinc-700 hover:bg-zinc-600 px-4 py-2 rounded-md w-full text-left"
+  >
+    Clear All Messages
+  </button>
+</div>
+
       {/* Voice Settings (future use) */}
       <div>
         <h3 className="text-sm font-semibold text-gray-300 mb-1">🔊 Voice Settings</h3>
@@ -412,7 +436,7 @@ export default function App() {
           Coming Soon
         </button>
       </div>
-
+          
       {/* Premium Access */}
       {isPremium && (
         <div>
