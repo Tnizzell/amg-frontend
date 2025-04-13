@@ -25,6 +25,26 @@ export default function App() {
   const [showDrawer, setShowDrawer] = useState(false); // if using LeftDrawer
 
   useEffect(() => {
+    const fetchUserInfo = async () => {
+      const { data, error } = await supabase
+        .from('users')
+        .select('nickname, favorite_mood, relationship_level')
+        .maybeSingle();
+  
+      if (data) {
+        setNickname(data.nickname || '');
+        setFavoriteMood(data.favorite_mood || 'normal');
+        setRelationshipLevel(data.relationship_level || 0);
+      }
+  
+      if (error) console.error('User fetch failed:', error);
+    };
+  
+    fetchUserInfo();
+  }, []);
+  
+
+  useEffect(() => {
     const fetchMemory = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -69,6 +89,38 @@ export default function App() {
     }
   }, [userId]);
 
+
+  const fetchUserProfile = async () => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('nickname, favorite_mood, relationship_level')
+      .maybeSingle();
+  
+    if (error) {
+      console.error('User fetch error:', error);
+      return;
+    }
+  
+    if (data) {
+      setNickname(data.nickname || '');
+      setFavoriteMood(data.favorite_mood || 'normal');
+      setRelationshipLevel(data.relationship_level || 0);
+    }
+  };
+
+  const MAX_MEMORY_LENGTH = 3000; // characters (not tokens for now)
+
+  const buildFormattedMemory = (history) => {
+    let memory = '';
+    for (let i = history.length - 1; i >= 0; i--) {
+      const line = `${history[i].role === 'user' ? 'You' : 'Her'}: ${history[i].message}\n`;
+      if ((memory.length + line.length) > MAX_MEMORY_LENGTH) break;
+      memory = line + memory;
+    }
+    return memory.trim();
+  };
+
+  
   const fetchEnvironment = async (userId, envName = 'cityscape') => {
     try {
       const res = await fetch('https://amg2-production.up.railway.app/environment/user-env', {
@@ -137,10 +189,8 @@ export default function App() {
   
     if (error) console.error('Load error:', error);
   
-    const formattedHistory = (history || []).reverse().map(m =>
-      `${m.role === 'user' ? 'You' : 'Her'}: ${m.message}`
-    ).join('\n');
-  
+    const formattedHistory = buildFormattedMemory(history || []);
+
     // Trust score logic
     const calculateTrust = (msg, level) => {
       return level + (msg.length > 50 ? 1.25 : 0.25);
@@ -152,7 +202,7 @@ export default function App() {
       const res = await axios.post('https://amg2-production.up.railway.app/reply', {
         prompt: textPrompt,
         nickname,
-        favorite_mood: favoriteMood,
+        favoritemood: favoriteMood,
         relationship_level: relationshipLevel,
         trust_score: trustScore,
         memory_context: formattedHistory
@@ -501,7 +551,7 @@ export default function App() {
             <div>
               <label className="block text-sm mb-1">Favorite Mood:</label>
               <select
-                value={favorite_Mood}
+                value={favoriteMood}
                 onChange={(e) => setFavoriteMood(e.target.value)}
                 className="px-3 py-2 bg-zinc-800 border border-white rounded-md text-white w-full"
               >
