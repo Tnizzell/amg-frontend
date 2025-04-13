@@ -109,30 +109,83 @@ export default function App() {
 
   const handleTextSubmit = async () => {
     if (!textPrompt.trim()) return;
+  
     const newUserMsg = { role: 'user', message: textPrompt };
-    setChatLog([...chatLog, newUserMsg]);
-    saveMessage('user', textPrompt);
-    setRelationshipLevel((prev) => prev + 1);
+    setChatLog((prev) => [...prev, newUserMsg]);
     setIsTyping(true);
-
+  
+    // Save user's message
+    await supabase.from('messages').insert({
+      user_id: userId,
+      role: 'user',
+      message: textPrompt
+    });
+  
+    // Fetch last 10 messages for memory context
+    const { data: history } = await supabase
+      .from('messages')
+      .select('role, message')
+      .eq('user_id', userId)
+      .order('inserted_at', { ascending: false })
+      .limit(10);
+  
+    const formattedHistory = history.reverse().map(m =>
+      `${m.role === 'user' ? 'You' : 'Her'}: ${m.message}`
+    ).join('\n');
+  
+    // Trust score logic
+    const calculateTrust = (msg, level) => {
+      return level + (msg.length > 50 ? 1.25 : 0.25);
+    };
+  
+    const trustScore = calculateTrust(textPrompt, relationshipLevel);
+  
     try {
+      // Send full memory + mood info to backend
       const res = await axios.post('https://amg2-production.up.railway.app/reply', {
         prompt: textPrompt,
-        premium: isPremium,
-        mood: mood,
+        nickname,
+        favorite_mood,
+        relationship_level: relationshipLevel,
+        trust_score: trustScore,
+        memory_context: formattedHistory
       });
+  
       const reply = res.data.reply;
+  
       const replyMsg = { role: 'gf', message: reply };
       setChatLog((prev) => [...prev, replyMsg]);
-      saveMessage('gf', reply);
-      speak(reply);
+  
+      // Save AI reply
+      await supabase.from('messages').insert({
+        user_id: userId,
+        role: 'gf',
+        message: reply
+      });
+  
+      // Update memory and relationship
+      const newLevel = relationshipLevel + 1;
+      setRelationshipLevel(newLevel);
+  
+      await supabase.from('users')
+        .update({
+          relationship_level: newLevel,
+          last_reply: textPrompt,
+          trust_score: trustScore
+        })
+        .eq('id', userId);
+  
+      // Speak it out loud
+      speakWithElevenLabs(reply);
+  
     } catch (err) {
       console.error('Reply error:', err);
     }
-
+  
     setIsTyping(false);
     setTextPrompt('');
   };
+  
 
   const speak = (text) => {
     const synth = window.speechSynthesis;
@@ -201,18 +254,123 @@ export default function App() {
             {msg.message}
           </div>
         ))}
+      <button
+        onClick={() => setShowDrawer(true)}
+        className="fixed top-4 left-4 z-50 bg-zinc-800 text-white px-3 py-2 rounded-lg shadow hover:bg-zinc-700"
+      >
+        ☰ Menu
+      </button>
 
-        {showDrawer && <LeftDrawer />}
+        {/* LEFT DRAWER MENU */}
+{showDrawer && (
+  <div className="fixed top-0 left-0 w-80 h-full bg-zinc-900 text-white z-50 shadow-xl p-6 overflow-y-auto">
+    <div className="flex justify-between items-center mb-6">
+      <h2 className="text-lg font-bold">Menu</h2>
+      <button
+        onClick={() => setShowDrawer(false)}
+        className="text-gray-400 hover:text-white text-xl"
+      >
+        ✕
+      </button>
+    </div>
+
+    <div className="space-y-5">
+
+      {/* Manage Memories */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-300 mb-1">🧠 Manage Memories</h3>
         <button
-            onClick={() => setShowDrawer(true)}
-            className="fixed top-4 left-4 z-50 bg-zinc-800 text-white px-3 py-2 rounded-lg"
-            >
-            ☰ Menu
-            </button>
+          onClick={() => {
+            setShowDrawer(false);
+            setShowSettings(true);
+          }}
+          className="bg-zinc-700 px-4 py-2 rounded-md w-full text-left hover:bg-zinc-600"
+        >
+          Edit Nickname & Mood
+        </button>
+      </div>
 
-            {showDrawer && (
-            <LeftDrawer onClose={() => setShowDrawer(false)} />
-        )}
+      {/* Change Mood */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-300 mb-1">🎭 Change Mood</h3>
+        <select
+          value={mood}
+          onChange={(e) => setMood(e.target.value)}
+          className="bg-zinc-800 border border-gray-600 rounded-md px-3 py-2 w-full text-white"
+        >
+          <option value="normal">Normal</option>
+          <option value="clingy">Clingy</option>
+          <option value="tsundere">Tsundere</option>
+          <option value="yandere">Yandere</option>
+          <option value="cute">Cute</option>
+        </select>
+      </div>
+
+      {/* Environment */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-300 mb-1">🌐 Change Environment</h3>
+        <select
+          onChange={(e) => fetchEnvironment(userId, e.target.value)}
+          className="bg-zinc-800 border border-gray-600 rounded-md px-3 py-2 w-full text-white"
+        >
+          <option value="cityscape">Cityscape</option>
+          <option value="lounge">Lounge</option>
+          <option value="bedroom">Bedroom</option>
+          <option value="void">Void</option>
+        </select>
+      </div>
+
+      {/* Relationship Level */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-300 mb-1">❤️ Relationship Level</h3>
+        <div className="w-full h-3 bg-gray-800 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-pink-600 transition-all duration-300"
+            style={{ width: `${Math.min(relationshipLevel * 5, 100)}%` }}
+          />
+        </div>
+        <p className="text-xs mt-1 text-gray-400">{relationshipLevel} / 100</p>
+      </div>
+
+      {/* Voice Settings (future use) */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-300 mb-1">🔊 Voice Settings</h3>
+        <button
+          onClick={() => alert("Coming soon — voice previews & ElevenLabs selector")}
+          className="bg-zinc-700 px-4 py-2 rounded-md w-full text-left hover:bg-zinc-600"
+        >
+          Coming Soon
+        </button>
+      </div>
+
+      {/* Premium Access */}
+      {isPremium && (
+        <div>
+          <h3 className="text-sm font-semibold text-gray-300 mb-1">⭐ Premium Status</h3>
+          <p className="text-xs text-green-400 mb-2">You are a Premium user</p>
+          <button
+            onClick={handleCancel}
+            className="bg-red-700 px-4 py-2 rounded-md w-full hover:bg-red-800"
+          >
+            Cancel Subscription
+          </button>
+        </div>
+      )}
+
+      {/* Logout */}
+      <div>
+        <button
+          onClick={handleLogout}
+          className="text-sm text-gray-400 hover:text-white underline mt-6"
+        >
+          Logout
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
+
 
         <p className="text-xs text-gray-400 text-right">Logged in as {userEmail}</p>
 
@@ -267,27 +425,28 @@ export default function App() {
           />
         </div>
       </div>
-  
-      {/* AVATAR CANVAS + ENV SELECTOR */}
-      {isPremium && userId && (
-        <div className="w-full max-w-xl mx-auto mt-6">
-          <div className="w-full h-[300px] bg-zinc-900 rounded-lg overflow-hidden">
-            <AvatarCanvas userId={userId} mood={mood} />
-          </div>
-          <div className="mt-4 flex flex-col items-end">
-            <label className="text-sm mb-1">🌐 Change Scene:</label>
-            <select
-              onChange={(e) => fetchEnvironment(userId, e.target.value)}
-              className="px-3 py-2 bg-zinc-800 border border-gray-500 rounded-md text-white"
-            >
-              <option value="cityscape">Cityscape</option>
-              <option value="lounge">Lounge</option>
-              <option value="bedroom">Bedroom</option>
-              <option value="void">Void</option>
-            </select>
-          </div>
+      
+      {relationshipLevel >= 25 ? (
+      <div className="w-full h-[300px] bg-zinc-900 rounded-lg overflow-hidden">
+        <AvatarCanvas userId={userId} mood={mood} />
+      </div>
+    ) : (
+      <div className="w-full h-[300px] bg-zinc-900 rounded-lg flex items-center justify-center relative overflow-hidden">
+        <div className="absolute inset-0 backdrop-blur-sm bg-black/60 z-10 flex flex-col items-center justify-center">
+          <span className="text-white text-2xl font-bold mb-1">🔒</span>
+          <p className="text-gray-300 text-sm text-center">
+            Model locked. Keep building your relationship to unlock.
+          </p>
         </div>
-      )}
+        {/* Tease silhouette or static image behind blur (optional) */}
+        <img
+          src="/images/locked-avatar-silhouette.png"
+          alt="Locked Avatar"
+          className="object-cover w-full h-full opacity-30 grayscale"
+        />
+      </div>
+    )}
+
   
       {/* PREMIUM BADGE */}
       {isPremium && (
