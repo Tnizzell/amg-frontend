@@ -56,7 +56,7 @@ export default function App() {
       if (!user) return;
       const { data } = await supabase
         .from('users')
-        .select('nickname, favoritemood')
+        .select('nickname, favorite_mood')
         .eq('id', user.id)
         .single();
       if (data) {

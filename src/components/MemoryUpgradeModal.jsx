@@ -38,8 +38,10 @@ export default function MemoryUpgradeModal({ onClose }) {
         body: JSON.stringify({ email: user.email, tier: selected })
       });
       
-
-      window.location.href = res.data.url;
+      // ✅ Proper fetch response parsing
+      const data = await res.json();
+      window.location.href = data.url;
+      
     } catch (err) {
       console.error('Memory upgrade error:', err);
       alert('Failed to start memory upgrade checkout.');
