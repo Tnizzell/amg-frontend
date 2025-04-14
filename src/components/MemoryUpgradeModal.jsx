@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import axios from 'axios';
+import supabase from '../supabaseClient';
 
 export default function MemoryUpgradeModal({ onClose }) {
   const [selected, setSelected] = useState(null);
@@ -23,6 +25,25 @@ export default function MemoryUpgradeModal({ onClose }) {
       price: '$99.99'
     }
   ];
+
+  const handleUpgrade = async () => {
+    if (!selected) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const res = await axios.post('https://amg2-production.up.railway.app/stripe/memory-upgrade', {
+        email: user.email,
+        tier: selected
+      });
+
+      window.location.href = res.data.url;
+    } catch (err) {
+      console.error('Memory upgrade error:', err);
+      alert('Failed to start memory upgrade checkout.');
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
@@ -54,6 +75,7 @@ export default function MemoryUpgradeModal({ onClose }) {
             Not now
           </button>
           <button
+            onClick={handleUpgrade}
             disabled={!selected}
             className={`px-6 py-2 rounded-lg text-white transition font-semibold ${
               selected ? 'bg-pink-600 hover:bg-pink-700' : 'bg-zinc-700 cursor-not-allowed'

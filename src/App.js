@@ -23,6 +23,8 @@ export default function App() {
   const [isPremium, setIsPremium] = useState(false);
   const [showMemoryModal, setShowMemoryModal] = useState(false);
 
+  const [selectedTier, setSelectedTier] = useState(null);
+
   const [showPremiumNotice, setShowPremiumNotice] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [relationshipLevel, setRelationshipLevel] = useState(0);
@@ -288,6 +290,8 @@ export default function App() {
     await supabase.auth.signOut();
     window.location.reload();
   };
+
+
 
   // UI continues below...
 
@@ -560,9 +564,9 @@ export default function App() {
         </div>
       )}
 
-      {showMemoryModal && (
-        <MemoryUpgradeModal onClose={() => setShowMemoryModal(false)} />
-      )}
+      {showMemoryModal && <MemoryUpgradeModal onClose={() => setShowMemoryModal(false)} />}
+
+
 
       {/* SETTINGS MODAL */}
       {showSettings && (
