@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import supabase from '../supabaseClient';
 
-const [isLoading, setIsLoading] = useState(false);
+
 
 export default function MemoryUpgradeModal({ onClose }) {
+
+  const [isLoading, setIsLoading] = useState(false);
   const [selected, setSelected] = useState(null);
 
   const tiers = [
