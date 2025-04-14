@@ -6,6 +6,8 @@ import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import AvatarCanvas from './components/AvatarCanvas';
 import LeftDrawer from './components/LeftDrawer';
+import MemoryUpgradeModal from './components/MemoryUpgradeModal';
+
 
 export default function App() {
   const [userEmail, setUserEmail] = useState(null);
@@ -19,6 +21,8 @@ export default function App() {
   const [userId, setUserId] = useState(null);
   const [mood, setMood] = useState('normal');
   const [isPremium, setIsPremium] = useState(false);
+  const [showMemoryModal, setShowMemoryModal] = useState(false);
+
   const [showPremiumNotice, setShowPremiumNotice] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [relationshipLevel, setRelationshipLevel] = useState(0);
@@ -180,17 +184,25 @@ export default function App() {
     });
     if (insertError) console.error('Insert failed:', insertError);
   
-    // Fetch last 10 messages for memory context
+    // Check how many messages exist
     const { data: history, error } = await supabase
       .from('messages')
       .select('role,message')
-      .order('inserted_at', { ascending: true })
-      .limit(10);
+      .eq('user_id', userId)
+      .order('inserted_at', { ascending: true });
   
     if (error) console.error('Load error:', error);
+    if ((history || []).length >= 25) {
+      setShowMemoryModal(true);
+    }
   
-    const formattedHistory = buildFormattedMemory(history || []);
-
+    // 🧠 Pull emotional summary from memory
+    const { data: reflectionData } = await axios.post(
+      'https://amg2-production.up.railway.app/memory/reflect',
+      { user_id: userId }
+    );
+    const summary = reflectionData?.summary || '';
+  
     // Trust score logic
     const calculateTrust = (msg, level) => {
       return level + (msg.length > 50 ? 1.25 : 0.25);
@@ -198,14 +210,13 @@ export default function App() {
     const trustScore = calculateTrust(textPrompt, relationshipLevel);
   
     try {
-      // Send memory + mood info to backend
       const res = await axios.post('https://amg2-production.up.railway.app/reply', {
         prompt: textPrompt,
         nickname,
-        favoritemood: favoriteMood,
+        favorite_mood: favoriteMood,
         relationship_level: relationshipLevel,
         trust_score: trustScore,
-        memory_context: formattedHistory
+        summary // this replaces formattedHistory
       });
   
       const reply = res.data.reply;
@@ -219,7 +230,7 @@ export default function App() {
         message: reply
       });
   
-      // Update memory and relationship
+      // Update relationship level
       const newLevel = relationshipLevel + 1;
       setRelationshipLevel(newLevel);
   
@@ -231,7 +242,6 @@ export default function App() {
         })
         .eq('id', userId);
   
-      // Speak it out loud
       speakWithElevenLabs(reply);
   
     } catch (err) {
@@ -243,6 +253,7 @@ export default function App() {
   };
   
   
+
   const speakWithElevenLabs = async (text) => {
     try {
       const response = await fetch('https://amg2-production.up.railway.app/tts', {
@@ -548,7 +559,11 @@ export default function App() {
           ⭐ Premium User
         </div>
       )}
-  
+
+      {showMemoryModal && (
+        <MemoryUpgradeModal onClose={() => setShowMemoryModal(false)} />
+      )}
+
       {/* SETTINGS MODAL */}
       {showSettings && (
         <div className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center px-4 transition-transform duration-300 scale-95 animate-fadeIn">
@@ -609,4 +624,5 @@ export default function App() {
       )}
     </div>
   );
+  
 }
