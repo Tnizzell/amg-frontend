@@ -9,6 +9,7 @@ import LeftDrawer from './components/LeftDrawer';
 import MemoryUpgradeModal from './components/MemoryUpgradeModal';
 
 
+
 export default function App() {
   const [userEmail, setUserEmail] = useState(null);
   const [chatLog, setChatLog] = useState([]);
@@ -104,22 +105,18 @@ export default function App() {
 
   const fetchUserProfile = async () => {
     const { data, error } = await supabase
-      .from('users')
-      .select('nickname, favorite_mood, relationship_level')
-      .eq('id', userId)
-      .single(); // <-- enforces single row
-  
-    if (error) {
-      console.error('User fetch error:', error);
-      return;
-    }
-  
-    if (data) {
-      setNickname(data.nickname || '');
-      setFavoriteMood(data.favorite_mood || 'normal');
-      setRelationshipLevel(data.relationship_level || 0);
-    }
-  };
+  .from('users')
+  .select('nickname, favorite_mood, relationship_level')
+  .eq('id', userId)
+  .limit(1);
+
+  const user = data?.[0]; // ✅ safely grab first row
+
+  if (user) {
+    setNickname(user.nickname || '');
+    setFavoriteMood(user.favorite_mood || 'normal');
+    setRelationshipLevel(user.relationship_level || 0);
+  }
   
 
   const MAX_MEMORY_LENGTH = 3000; // characters (not tokens for now)
