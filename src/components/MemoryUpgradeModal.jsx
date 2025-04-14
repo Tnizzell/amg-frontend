@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import axios from 'axios';
 import supabase from '../supabaseClient';
 
 export default function MemoryUpgradeModal({ onClose }) {
@@ -33,10 +32,12 @@ export default function MemoryUpgradeModal({ onClose }) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const res = await axios.post('https://amg2-production.up.railway.app/stripe/memory-upgrade', {
-        email: user.email,
-        tier: selected
+      const res = await fetch('https://amg2-production.up.railway.app/subscribe/memory-upgrade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email, tier: selected })
       });
+      
 
       window.location.href = res.data.url;
     } catch (err) {
