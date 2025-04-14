@@ -103,10 +103,12 @@ export default function App() {
 
 
   const fetchUserProfile = async () => {
+    if (!userId) return;
+  
     const { data, error } = await supabase
       .from('users')
       .select('nickname, favorite_mood, relationship_level')
-      .limit(1)
+      .eq('id', userId)
       .maybeSingle();
   
     if (error) {
