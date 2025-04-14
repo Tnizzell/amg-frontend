@@ -23,13 +23,19 @@ export default function App() {
   const [isPremium, setIsPremium] = useState(false);
   const [showMemoryModal, setShowMemoryModal] = useState(false);
 
-  const [selectedTier, setSelectedTier] = useState(null);
 
   const [showPremiumNotice, setShowPremiumNotice] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [relationshipLevel, setRelationshipLevel] = useState(0);
   const [showDrawer, setShowDrawer] = useState(false); // if using LeftDrawer
 
+  useEffect(() => {
+    if (userId) {
+      fetchUserProfile();
+    }
+  }, [userId]);
+  
+  
   useEffect(() => {
     const fetchUserInfo = async () => {
       const { data, error } = await supabase
@@ -100,6 +106,7 @@ export default function App() {
     const { data, error } = await supabase
       .from('users')
       .select('nickname, favorite_mood, relationship_level')
+      .limit(1)
       .maybeSingle();
   
     if (error) {
@@ -113,6 +120,7 @@ export default function App() {
       setRelationshipLevel(data.relationship_level || 0);
     }
   };
+  
 
   const MAX_MEMORY_LENGTH = 3000; // characters (not tokens for now)
 
