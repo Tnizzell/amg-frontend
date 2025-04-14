@@ -106,8 +106,8 @@ export default function App() {
     const { data, error } = await supabase
       .from('users')
       .select('nickname, favorite_mood, relationship_level')
-      .limit(1)
-      .maybeSingle();
+      .eq('id', userId)
+      .single(); // <-- enforces single row
   
     if (error) {
       console.error('User fetch error:', error);

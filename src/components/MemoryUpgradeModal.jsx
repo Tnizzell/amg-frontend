@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import supabase from '../supabaseClient';
 
+const [isLoading, setIsLoading] = useState(false);
+
 export default function MemoryUpgradeModal({ onClose }) {
   const [selected, setSelected] = useState(null);
 
@@ -32,12 +34,14 @@ export default function MemoryUpgradeModal({ onClose }) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const res = await fetch('https://amg2-production.up.railway.app/subscribe/memory-upgrade', {
+      const res = await fetch('https://amg2-production.up.railway.app/stripe/memory-upgrade', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: user.email, tier: selected })
       });
       
+      setIsLoading(true);
+
       // ✅ Proper fetch response parsing
       const data = await res.json();
       window.location.href = data.url;
